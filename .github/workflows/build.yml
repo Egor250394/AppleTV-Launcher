@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,12 +21,21 @@ jobs:
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@v3
+
+      - name: Locate project
+        run: |
+          find . -name gradlew -type f
+          find . -name settings.gradle -o -name settings.gradle.kts
 
       - name: Build APK
         run: |
-          ls -la
-          find . -name gradlew
+          GRADLEW=$(find . -name gradlew -type f | head -n 1)
+          if [ -z "$GRADLEW" ]; then
+            echo "ERROR: gradlew not found in project"
+            exit 1
+          fi
+          cd "$(dirname "$GRADLEW")"
           chmod +x gradlew
           ./gradlew assembleDebug
 
@@ -34,3 +44,4 @@ jobs:
         with:
           name: AppleTV-Launcher-APK
           path: '**/build/outputs/apk/debug/*.apk'
+          if-no-files-found: error
